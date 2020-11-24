@@ -1,0 +1,42 @@
+<html>
+  <head>
+    <title>Bird Watcher Pro</title>
+    
+  </head>
+  <body>
+    
+
+    <h1>Bird Watcher Pro</h1>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+    <img id="video_feed_frame" src="{{ url_for('video_feed_frame') }}">
+    <script>
+      $(document).ready(function() {
+        $("#video_feed_frame").on("click", function(event) {
+          var x = event.pageX - this.offsetLeft;
+          var y = event.pageY - this.offsetTop;
+          $.getJSON('/get_coord',{
+            x: event.pageX - this.offsetLeft,
+            y: event.pageY - this.offsetTop
+          });
+       });
+      });
+
+    </script>
+
+
+    <h2>Status Log</h2>
+    <pre id="status_text"></pre>
+    <script>
+      var targetContainer = document.getElementById("status_text");
+      var eventSource = new EventSource("/status_text")
+      eventSource.onmessage = function(e) {
+        targetContainer.textContent = e.data+'\n' + targetContainer.textContent;
+      };
+    </script>
+
+    
+   
+    
+    
+  </body>
+</html>
