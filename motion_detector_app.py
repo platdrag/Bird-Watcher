@@ -13,7 +13,7 @@ import numpy as np
 import yaml 
 from motion_detector import MotionDetector
 from defaults import *
-
+import threading
 
 from flask import Flask, Response, request, render_template
 
@@ -35,14 +35,24 @@ def get_coord():
 	
 	return Response( "ok", mimetype = "text/html")
 
-import threading
+
 @flask_app.route("/")
 def index(): 
 	# return the rendered template
 	return render_template("index.html",status_text=flask_app.md.currentStatus)
 
+import socket
+def get_outbound_ip():
+	s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+	s.connect(("8.8.8.8", 80))
+	return s.getsockname()[0]
+
 if __name__ == "__main__":
-	ap = argparse.ArgumentParser()
+	ap = argparse.ArgumentParser(
+		   formatter_class=lambda prog: argparse.ArgumentDefaultsHelpFormatter(
+                    prog, max_help_position=80, width=150))
+		
+
 	ap.add_argument("-v", "--video", default=None, help="path to the video file. leave empty for live feed")
 	ap.add_argument("-x", "--capture-center-x", type=int, default=None, help="x coordinate - center of capture square")
 	ap.add_argument("-y", "--capture-center-y", type=int, default=None, help="y coordinate - center of capture square")
@@ -54,16 +64,18 @@ if __name__ == "__main__":
 	ap.add_argument("--frame-resize", type=int, default=DEFAULT_FRAME_RESIZE, help="resize live feed camera. None is not to resize")
 	ap.add_argument("--download-photo-folder", type=str, default=DEFAULT_DOWNLOAD_PHOTO_FOLDER, help="Location of downloaded photos from camera")
 	ap.add_argument("--autofocus-before-trigger",default=DEFAULT_AUTOFOCUS_BEFORE_TRIGGER, action="store_false", help="trigger camera's autofocus before capturign an image")
+	ap.add_argument("--ui-port",type=int, default=DEFAULT_UI_PORT, help="UI web server listening port")
 	
 
 	args = vars(ap.parse_args())
 	print (args)
-		
+	port = args.pop('ui_port')
 	# loop over the frames of the video
 	with MotionDetector(**args) as md:
 		flask_app.md = md
 		thread = threading.Thread(target = md.stream, args = (), daemon=True)
 		thread.start()
 		print ("running flask")
-		flask_app.run(host='10.0.0.41', port=8080, debug=True, threaded=True, use_reloader=False)
+		ip = get_outbound_ip()
+		flask_app.run(host=ip, port=port, debug=False, threaded=True, use_reloader=False)
 		

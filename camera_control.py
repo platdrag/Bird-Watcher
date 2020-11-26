@@ -62,6 +62,7 @@ class CameraControlManagerSubProcess(SyncManager):
 
     def worker(self):
         print ('worker running')
+        camera = None
         while True:
             camMsg = self.pq.get()
             try:
@@ -82,7 +83,7 @@ class CameraControlManagerSubProcess(SyncManager):
                     break
             except gp.GPhoto2Error as ge2:
                 print (f'got gphoto2.GPhoto2Error error {ge2}. trying to re-init')
-                release_camera(camera)
+                release_camera(camera) 
                 time.sleep(5) #give the situation some time to sink in...
                 if INIT_CAMERA != camMsg.cmd: # this is so that we won't send INIT twice when original message was INIT.
                     self.submit_task(CameraControlMsg(INIT_CAMERA, self.capture_target))
@@ -113,7 +114,8 @@ def init_camera(capture_target = DEFAULT_CAPTURE_TARGET):
     return camera
 
 def release_camera(camera):
-    camera.exit()
+    if camera:
+        camera.exit()
 
 def capture_image(camera, autofocus=True):
 
