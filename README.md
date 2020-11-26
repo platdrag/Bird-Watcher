@@ -1,11 +1,11 @@
-#Bird Watcher
+# Bird Watcher
 Bird Watcher is an automatic photography tool designed to capture photos of birds and other animals in the wild.
 
 The tool is designed to run on a Rasberry Pi equipped with Pi-cam (but potentiall can run on any machine with a webcam). The Pi-cam is set to watch a chosen  area, and using motion detection algorithms (using OpenCV), automatically triggers a DSLR camera (connected using a USB cable using gphoto2) when an objects enters thea specified area. Watch the live feed from the camera and select watched area from a designated web UI.
 
 
 
-###Installation
+### Installation
 
 1. Install OS. PI OS recommeded but any flavor of debian will do.
 2. clone this repository. 
@@ -20,7 +20,7 @@ The tool is designed to run on a Rasberry Pi equipped with Pi-cam (but potential
 7. browse to http://<Machine-IP>:8080.
     1. in the web UI, double click anywhere on the video to set the center of the capture square.
 
-#####Program arguments
+##### Program arguments
 <pre><code>usage: motion_detector_app.py [-h] [-v VIDEO] [-x CAPTURE_CENTER_X] [-y CAPTURE_CENTER_Y] [--triggered-area-percent TRIGGERED_AREA_PERCENT]
                               [--capture-square-side CAPTURE_SQUARE_SIDE] [--frames-to-trigger FRAMES_TO_TRIGGER]
                               [--retrigger-interval RETRIGGER_INTERVAL] [--capture-target CAPTURE_TARGET] [--frame-resize FRAME_RESIZE]
