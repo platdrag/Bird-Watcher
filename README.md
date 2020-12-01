@@ -2,6 +2,7 @@
 Bird Watcher is a photography trigger designed to automatically capture photos of birds and other animals in the wild.
 
 The tool is designed to run on a Rasberry Pi equipped with Pi-cam (but can run on any machine with a webcam). The Pi-cam feed is set to watch a chosen area of interest (e.g. bird feeder). Using motion detection algorithms (using OpenCV), it automatically triggers a connected DSLR camera (thru a USB cable using libgphoto2) when an objects enters the specified area. Live feed can be watched from a designated web UI.
+![target](./doc/target.jpg)
 
 ### Features
 - set the capture detection area from the live feed in the web GUI
@@ -18,12 +19,14 @@ The tool is designed to run on a Rasberry Pi equipped with Pi-cam (but can run o
 4. [Download and install latest OpenCV](https://qengineering.eu/install-opencv-4.4-on-raspberry-pi-4.html)
 5. [Download and install Gphoto2](https://pimylifeup.com/raspberry-pi-dslr-camera-control/)
 4. Install dependencies: `pip3 install -r requirements.txt`
-5. make sure all hardware is present and connected:
+5. make sure all hardware is present and connected (see assembly suggestion in photo below):
     1. webcam (PI-cam recommended): `raspistill -o testshot.jpg`
     2. DSLR (or any [gphoto2 supported camera](http://www.gphoto.org/proj/libgphoto2/support.php)). Check you can successfully capture image: `gphoto2 --capture-image`
+    ![system setup](./doc/system_setup.jpg)
 6. run `python3 motion_detector_app.py <args>` see program arguments below.
 7. browse to http://<Machine-IP>:8080.
     1. in the web UI, double click anywhere on the video to set the center of the capture square.
+    ![UI](./doc/UI.jpg)
 
 ### Program arguments
 <pre><code>usage: motion_detector_app.py [-h] [-v VIDEO] [-x CAPTURE_CENTER_X] [-y CAPTURE_CENTER_Y] [--triggered-area-percent TRIGGERED_AREA_PERCENT]
