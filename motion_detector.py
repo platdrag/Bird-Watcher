@@ -35,7 +35,9 @@ class MotionDetector:
 		self.currentFrames = None
 		self.currentStatus = 'Undetected'
 		self.status_change_event = threading.Event()
-		
+		self.rebase_timer = None 
+
+
 	def __enter__(self):
 		# initialize the first frame in the video stream
 		# if the video argument is None, then we are reading from webcam	
@@ -50,7 +52,7 @@ class MotionDetector:
 		
 		frame = self._read_frame()
 		self.frame_dim = frame.shape
-		self.set_detect_rect(self.conf['coordinates']['x'],self.conf['coordinates']['y']) #set detection rect to middle of frame of size detection_rect_len
+		self.set_detect_rect() #set detection rect to middle of frame of size detection_rect_len
 		
 
 		return self
@@ -66,11 +68,11 @@ class MotionDetector:
 	
 	
 	
-	def _set_current_status(self, new_status):
+	def _set_current_status(self, new_status,fc=-1):
 		if new_status != self.currentStatus:
 			self.currentStatus = new_status
 			self.status_change_event.set()
-			print ('status change:',new_status)
+			print (fc,'status change:',new_status)
 	
 	#grab the current frame 
 	def _read_frame(self):
@@ -93,8 +95,10 @@ class MotionDetector:
 		return b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + bytearray(encodedImage) + b'\r\n'
 
 	def set_detect_rect(self, x = None,y = None):
-		x = int(self.frame_dim[0] / 2) if x is None else x
-		y = int(self.frame_dim[1] / 2) if y is None else y 
+		# x = int(self.frame_dim[0] / 2) if x is None else x
+		# y = int(self.frame_dim[1] / 2) if y is None else y 
+		x = self.conf['coordinates']['x'] if x is None else x
+		y = self.conf['coordinates']['y'] if y is None else y 
 		drl = int (self.capture_square_side / 2)
 		self.detect_rect_slice = ( slice(
 			max(x - drl, 0),
@@ -110,7 +114,10 @@ class MotionDetector:
 			yaml.safe_dump(self.conf, f)
 			
 		#Setting timer to rebase the underlying background image used for moition detection comparison, to avoid drift.
-		self.rebase_timer = threading.Timer(self.rebase_interval, self.set_detect_rect,[self.conf['coordinates']['x'],self.conf['coordinates']['y']]).start()
+		if self.rebase_timer:
+			self.rebase_timer.cancel()
+		self.rebase_timer = threading.Timer(self.rebase_interval, self.set_detect_rect)
+		self.rebase_timer.start()
 
 		self.firstFrame = None #need to retake the base image
 		self._set_current_status(f'detection square was set to ({y},{x})')
@@ -120,14 +127,16 @@ class MotionDetector:
 			# Init:
 			last_detected = collections.deque(self.frames_to_trigger*[0], self.frames_to_trigger) # sliding window of last frames_to_trigger frames
 			prev_triggered = False
-			fc=1
+			fc=0
 			ts = time.time()
-			frame_time = time.time()
+			triggered_time = frame_time = time.time()
 			curr_fps = TARGET_FPS
+			time.sleep(.5) #it takes the camera feed a few miliseconds to initialize
 			while True:
 				if time.time() - frame_time < 1 / TARGET_FPS: # should be a bit less than 1/32th of a second
 					time.sleep(0.003)
 					continue
+				fc+=1
 				frame_time = time.time()
 
 				# grab the current frame and initialize the occupied/Undetected text		
@@ -149,7 +158,7 @@ class MotionDetector:
 				if self.firstFrame is None:
 					self.firstFrame = gray
 					prev_triggered = False
-					self._set_current_status('rebasing reference frame')
+					self._set_current_status('rebasing reference frame',fc)
 					continue
 
 				# compute the absolute difference between the current frame and first frame
@@ -189,7 +198,7 @@ class MotionDetector:
 				prev_triggered = triggered
 				
 				#FPS calculation
-				fc+=1
+				
 				if time.time() - ts > 1:
 					curr_fps=fc
 					fc=1
@@ -203,7 +212,7 @@ class MotionDetector:
 
 
 				self.currentFrames=(frame, thresh, frameDelta, orig_frame)
-				self._set_current_status(text)
+				self._set_current_status(text,fc)
 					
 
 	def stream_original_frame(self):
